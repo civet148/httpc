@@ -76,19 +76,6 @@ func (c *Client) PostUrlEncoded(strUrl string, values UrlValues) (response *Resp
 	return c.do(HTTP_METHOD_POST, strUrl, values)
 }
 
-//send a http request by POST method with content-type multipart/form-data or application/x-www-form-urlencoded
-//data type must could be string,[]byte,UrlValues,struct and so on
-func (c *Client) Post(strUrl string, data interface{}) (response *Response, err error) {
-	return c.do(HTTP_METHOD_POST, strUrl, data)
-}
-
-//send a http request by POST method with content-type application/json
-//data type must could be string,[]byte,UrlValues,struct and so on
-func (c *Client) PostJson(strUrl string, data interface{}) (response *Response, err error) {
-	c.header.Set(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_APPLICATION_JSON)
-	return c.do(HTTP_METHOD_POST, strUrl, data)
-}
-
 //send a http request by PUT method
 func (c *Client) Put(strUrl string) (response *Response, err error) {
 	return c.do(HTTP_METHOD_PUT, strUrl, nil)
@@ -107,6 +94,41 @@ func (c *Client) Trace(strUrl string) (response *Response, err error) {
 //send a http request by PATCH method
 func (c *Client) Patch(strUrl string) (response *Response, err error) {
 	return c.do(HTTP_METHOD_PATCH, strUrl, nil)
+}
+
+//send a http request by POST method with content-type specified
+//data type must could be string,[]byte,UrlValues,struct and so on
+func (c *Client) Post(strContentType string, strUrl string, data interface{}) (response *Response, err error) {
+	c.header.Set(HEADER_KEY_CONTENT_TYPE, strContentType)
+	return c.do(HTTP_METHOD_POST, strUrl, data)
+}
+
+//send a http request by POST method with content-type application/json
+//data type must could be string,[]byte,UrlValues,struct and so on
+func (c *Client) PostJson(strUrl string, data interface{}) (response *Response, err error) {
+	c.header.Set(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_APPLICATION_JSON)
+	return c.do(HTTP_METHOD_POST, strUrl, data)
+}
+
+//send a http request by POST method with content-type text/plain
+//data type must could be string,[]byte,UrlValues,struct and so on
+func (c *Client) PostRaw(strUrl string, data interface{}) (response *Response, err error) {
+	c.header.Set(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_TEXT_PLAIN)
+	return c.do(HTTP_METHOD_POST, strUrl, data)
+}
+
+//send a http request by POST method with content-type multipart/form-data
+//data type must could be string,[]byte,UrlValues,struct and so on
+func (c *Client) PostFormData(strUrl string, data interface{}) (response *Response, err error) {
+	c.header.Set(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_MULTIPART_FORM_DATA)
+	return c.do(HTTP_METHOD_POST, strUrl, data)
+}
+
+//send a http request by POST method with content-type multipart/form-data
+//data type must could be string,[]byte,UrlValues,struct and so on
+func (c *Client) PostFormUrlEncoded(strUrl string, data interface{}) (response *Response, err error) {
+	c.header.Set(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_X_WWW_FORM_URL_ENCODED)
+	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
 //do send request to destination host
