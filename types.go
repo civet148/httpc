@@ -1,6 +1,8 @@
 package httpc
 
-import "net/http"
+import (
+	"net/http"
+)
 
 const (
 	HTTP_METHOD_GET     = http.MethodGet     //请求指定的页面信息，并返回实体主体。
@@ -15,8 +17,9 @@ const (
 )
 
 const (
-	HEADER_KEY_CONTENT_TYPE  = "Content-Type"
-	HEADER_KEY_AUTHORIZATION = "Authorization"
+	HEADER_KEY_CONTENT_TYPE   = "Content-Type"
+	HEADER_KEY_AUTHORIZATION  = "Authorization"
+	HEADER_KEY_CONTENT_LENGTH = "Content-Length"
 )
 
 const (
@@ -25,6 +28,5 @@ const (
 	CONTENT_TYPE_NAME_X_WWW_FORM_URL_ENCODED = "application/x-www-form-urlencoded" //content-type (urlencoded)
 	CONTENT_TYPE_NAME_APPLICATION_JSON       = "application/json"                  //content-type (json)
 	CONTENT_TYPE_NAME_TEXT_HTML              = "text/html"                         //content-type (html)
+	CONTENT_TYPE_NAME_OCTET_STREAM           = "application/octet-stream"          //content-type (binary)
 )
-
-type UrlValues map[string]interface{} //POST提交表单参数

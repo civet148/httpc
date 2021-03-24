@@ -3,7 +3,6 @@ package httpc
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/civet148/log"
 	"io"
 	"io/ioutil"
@@ -67,12 +66,12 @@ func (c *Client) Header() *Header {
 }
 
 //send a http request by GET method
-func (c *Client) Get(strUrl string, values UrlValues) (response *Response, err error) {
+func (c *Client) Get(strUrl string, values url.Values) (response *Response, err error) {
 	return c.do(HTTP_METHOD_GET, strUrl, values)
 }
 
 //send a http request by POST method with application/x-www-form-urlencoded
-func (c *Client) PostUrlEncoded(strUrl string, values UrlValues) (response *Response, err error) {
+func (c *Client) PostUrlEncoded(strUrl string, values url.Values) (response *Response, err error) {
 	return c.do(HTTP_METHOD_POST, strUrl, values)
 }
 
@@ -97,35 +96,35 @@ func (c *Client) Patch(strUrl string) (response *Response, err error) {
 }
 
 //send a http request by POST method with content-type specified
-//data type must could be string,[]byte,UrlValues,struct and so on
+//data type must could be string,[]byte,url.Values,struct and so on
 func (c *Client) Post(strContentType string, strUrl string, data interface{}) (response *Response, err error) {
 	c.header.Set(HEADER_KEY_CONTENT_TYPE, strContentType)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
 //send a http request by POST method with content-type application/json
-//data type must could be string,[]byte,UrlValues,struct and so on
+//data type must could be string,[]byte,url.Values,struct and so on
 func (c *Client) PostJson(strUrl string, data interface{}) (response *Response, err error) {
 	c.header.Set(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_APPLICATION_JSON)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
 //send a http request by POST method with content-type text/plain
-//data type must could be string,[]byte,UrlValues,struct and so on
+//data type must could be string,[]byte,url.Values,struct and so on
 func (c *Client) PostRaw(strUrl string, data interface{}) (response *Response, err error) {
 	c.header.Set(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_TEXT_PLAIN)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
 //send a http request by POST method with content-type multipart/form-data
-//data type must could be string,[]byte,UrlValues,struct and so on
+//data type must could be string,[]byte,url.Values,struct and so on
 func (c *Client) PostFormData(strUrl string, data interface{}) (response *Response, err error) {
 	c.header.Set(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_MULTIPART_FORM_DATA)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
 //send a http request by POST method with content-type multipart/form-data
-//data type must could be string,[]byte,UrlValues,struct and so on
+//data type must could be string,[]byte,url.Values,struct and so on
 func (c *Client) PostFormUrlEncoded(strUrl string, data interface{}) (response *Response, err error) {
 	c.header.Set(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_X_WWW_FORM_URL_ENCODED)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
@@ -139,17 +138,11 @@ func (c *Client) do(strMethod, strUrl string, data interface{}) (response *Respo
 	if data != nil {
 
 		switch data.(type) {
-		case UrlValues:
+		case url.Values:
 			{
-				kvs := url.Values{}
-				values := data.(UrlValues)
-				if values != nil {
-					for k, v := range values {
-						kvs.Add(k, fmt.Sprintf("%v", v))
-					}
-				}
-				body = strings.NewReader(kvs.Encode())
-				log.Debug("UrlValues -> [%+v]", data.(UrlValues))
+				values := data.(url.Values)
+				body = strings.NewReader(values.Encode())
+				log.Debug("url.Values -> [%+v]", values)
 			}
 		case string:
 			{

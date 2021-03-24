@@ -1,6 +1,9 @@
 package httpc
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 type Header struct {
 	mutex  sync.Mutex
@@ -85,8 +88,20 @@ func (h *Header) SetTextHtml() *Header {
 	return h
 }
 
+//设置http请求头部内容类型(Content-Type=application/octet-stream)
+func (h *Header) SetOctetStream() *Header {
+	h.add(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_OCTET_STREAM)
+	return h
+}
+
 //设置http请求头部key="Authorization" value=strValue
 func (h *Header) SetAuthorization(strValue string) *Header {
 	h.add(HEADER_KEY_AUTHORIZATION, strValue)
+	return h
+}
+
+//设置http请求头部key="Content-Length" value=strValue
+func (h *Header) SetContentLength(size int) *Header {
+	h.add(HEADER_KEY_CONTENT_LENGTH, fmt.Sprintf("%v", size))
 	return h
 }
