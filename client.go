@@ -17,12 +17,6 @@ type Client struct {
 	header *Header
 }
 
-type Response struct {
-	StatusCode  int
-	ContentType string
-	Body        []byte
-}
-
 func init() {
 	log.SetLevel(log.LEVEL_INFO)
 }

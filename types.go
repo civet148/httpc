@@ -1,6 +1,7 @@
 package httpc
 
 import (
+	"encoding/json"
 	"net/http"
 )
 
@@ -30,3 +31,13 @@ const (
 	CONTENT_TYPE_NAME_TEXT_HTML              = "text/html"                         //content-type (html)
 	CONTENT_TYPE_NAME_OCTET_STREAM           = "application/octet-stream"          //content-type (binary)
 )
+
+type Response struct {
+	StatusCode  int
+	ContentType string
+	Body        []byte
+}
+
+func (r *Response) Unmarshal(v interface{}) (err error) {
+	return json.Unmarshal(r.Body, v)
+}
