@@ -61,7 +61,7 @@ func (c *Client) Header() *Header {
 
 //send a http request by GET method
 func (c *Client) Get(strUrl string, values url.Values) (response *Response, err error) {
-	return c.do(HTTP_METHOD_GET, strUrl, values)
+	return c.get(strUrl, values)
 }
 
 //send a http request by POST method with application/x-www-form-urlencoded
@@ -165,6 +165,17 @@ func (c *Client) do(strMethod, strUrl string, data interface{}) (response *Respo
 		return
 	}
 	return
+}
+
+func (c *Client) get(strUrl string, values url.Values) (response *Response, err error) {
+
+	u, err := url.Parse(strUrl)
+	if err != nil {
+		return
+	}
+	u.RawQuery = values.Encode()
+	log.Debugf("GET [%s]", u.String())
+	return c.sendRequest(HTTP_METHOD_GET, u.String(), nil)
 }
 
 func (c *Client) sendRequest(strMethod, strUrl string, body io.Reader) (response *Response, err error) {
