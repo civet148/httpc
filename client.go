@@ -3,6 +3,7 @@ package httpc
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/civet148/log"
 	"io"
 	"io/ioutil"
@@ -60,72 +61,92 @@ func (c *Client) Header() *Header {
 }
 
 //send a http request by GET method
-func (c *Client) Get(strUrl string, values url.Values) (response *Response, err error) {
+func (c *Client) Get(strUrl string, values url.Values) (r *Response, err error) {
 	return c.get(strUrl, values)
 }
 
 //send a http request by POST method with application/x-www-form-urlencoded
-func (c *Client) PostUrlEncoded(strUrl string, values url.Values) (response *Response, err error) {
+func (c *Client) PostUrlEncoded(strUrl string, values url.Values) (r *Response, err error) {
 	return c.do(HTTP_METHOD_POST, strUrl, values)
 }
 
+//send a http request by GET method and unmarshal json data to struct v
+func (c *Client) GetJson(strUrl string, values url.Values, v interface{}) (status int, err error) {
+	var r *Response
+	if r, err = c.get(strUrl, values); err != nil {
+		log.Errorf("GET url [%s] values [%+v] error [%s]", strUrl, values, err.Error())
+		return
+	}
+	if r.StatusCode != http.StatusOK {
+		err = fmt.Errorf("GET url [%s] values [%+v] remote server status code [%v]", strUrl, values, r.StatusCode)
+		log.Errorf(err.Error())
+		return r.StatusCode, err
+	}
+	//log.Debugf("url [%s] values [%+v] response [%s]", strUrl, values, string(r.Body))
+	if err = json.Unmarshal(r.Body, v); err != nil {
+		log.Errorf("json unmarshal error [%s] data body [%s]", err, r.Body)
+		return
+	}
+	return http.StatusOK, nil
+}
+
 //send a http request by PUT method
-func (c *Client) Put(strUrl string) (response *Response, err error) {
+func (c *Client) Put(strUrl string) (r *Response, err error) {
 	return c.do(HTTP_METHOD_PUT, strUrl, nil)
 }
 
 //send a http request by DELETE method
-func (c *Client) Delete(strUrl string) (response *Response, err error) {
+func (c *Client) Delete(strUrl string) (r *Response, err error) {
 	return c.do(HTTP_METHOD_DELETE, strUrl, nil)
 }
 
 //send a http request by TRACE method
-func (c *Client) Trace(strUrl string) (response *Response, err error) {
+func (c *Client) Trace(strUrl string) (r *Response, err error) {
 	return c.do(HTTP_METHOD_TRACE, strUrl, nil)
 }
 
 //send a http request by PATCH method
-func (c *Client) Patch(strUrl string) (response *Response, err error) {
+func (c *Client) Patch(strUrl string) (r *Response, err error) {
 	return c.do(HTTP_METHOD_PATCH, strUrl, nil)
 }
 
 //send a http request by POST method with content-type specified
-//data type must could be string,[]byte,url.Values,struct and so on
-func (c *Client) Post(strContentType string, strUrl string, data interface{}) (response *Response, err error) {
+//data type could be string,[]byte,url.Values,struct and so on
+func (c *Client) Post(strContentType string, strUrl string, data interface{}) (r *Response, err error) {
 	c.header.Set(HEADER_KEY_CONTENT_TYPE, strContentType)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
 //send a http request by POST method with content-type application/json
-//data type must could be string,[]byte,url.Values,struct and so on
-func (c *Client) PostJson(strUrl string, data interface{}) (response *Response, err error) {
+//data type could be string,[]byte,url.Values,struct and so on and
+func (c *Client) PostJson(strUrl string, data interface{}) (r *Response, err error) {
 	c.header.Set(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_APPLICATION_JSON)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
 //send a http request by POST method with content-type text/plain
 //data type must could be string,[]byte,url.Values,struct and so on
-func (c *Client) PostRaw(strUrl string, data interface{}) (response *Response, err error) {
+func (c *Client) PostRaw(strUrl string, data interface{}) (r *Response, err error) {
 	c.header.Set(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_TEXT_PLAIN)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
 //send a http request by POST method with content-type multipart/form-data
 //data type must could be string,[]byte,url.Values,struct and so on
-func (c *Client) PostFormData(strUrl string, data interface{}) (response *Response, err error) {
+func (c *Client) PostFormData(strUrl string, data interface{}) (r *Response, err error) {
 	c.header.Set(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_MULTIPART_FORM_DATA)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
 //send a http request by POST method with content-type multipart/form-data
 //data type must could be string,[]byte,url.Values,struct and so on
-func (c *Client) PostFormUrlEncoded(strUrl string, data interface{}) (response *Response, err error) {
+func (c *Client) PostFormUrlEncoded(strUrl string, data interface{}) (r *Response, err error) {
 	c.header.Set(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_X_WWW_FORM_URL_ENCODED)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
 //do send request to destination host
-func (c *Client) do(strMethod, strUrl string, data interface{}) (response *Response, err error) {
+func (c *Client) do(strMethod, strUrl string, data interface{}) (r *Response, err error) {
 
 	var body io.Reader
 
@@ -161,24 +182,28 @@ func (c *Client) do(strMethod, strUrl string, data interface{}) (response *Respo
 		}
 	}
 
-	if response, err = c.sendRequest(strMethod, strUrl, body); err != nil {
+	if r, err = c.sendRequest(strMethod, strUrl, body); err != nil {
 		return
 	}
 	return
 }
 
-func (c *Client) get(strUrl string, values url.Values) (response *Response, err error) {
+func (c *Client) get(strUrl string, values url.Values) (r *Response, err error) {
 
-	u, err := url.Parse(strUrl)
-	if err != nil {
-		return
+	if values != nil {
+		u, err := url.Parse(strUrl)
+		if err != nil {
+			return nil, err
+		}
+		u.RawQuery = values.Encode()
+		strUrl = u.String()
 	}
-	u.RawQuery = values.Encode()
-	log.Debugf("GET [%s]", u.String())
-	return c.sendRequest(HTTP_METHOD_GET, u.String(), nil)
+
+	log.Debugf("GET [%s]", strUrl)
+	return c.sendRequest(HTTP_METHOD_GET, strUrl, nil)
 }
 
-func (c *Client) sendRequest(strMethod, strUrl string, body io.Reader) (response *Response, err error) {
+func (c *Client) sendRequest(strMethod, strUrl string, body io.Reader) (r *Response, err error) {
 
 	var req *http.Request
 	var resp *http.Response
@@ -199,12 +224,12 @@ func (c *Client) sendRequest(strMethod, strUrl string, body io.Reader) (response
 
 	defer resp.Body.Close()
 
-	response = &Response{
+	r = &Response{
 		StatusCode:  resp.StatusCode,
 		ContentType: resp.Header.Get(HEADER_KEY_CONTENT_TYPE),
 	}
 
-	if response.Body, err = ioutil.ReadAll(resp.Body); err != nil {
+	if r.Body, err = ioutil.ReadAll(resp.Body); err != nil {
 		log.Errorf("%s", err)
 		return
 	}
