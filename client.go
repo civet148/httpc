@@ -14,8 +14,8 @@ import (
 )
 
 type Client struct {
-	cli    *http.Client
-	header *Header
+	cli    http.Client
+	header Header
 }
 
 func init() {
@@ -40,12 +40,12 @@ func newClient(timeout int, args ...interface{}) (c *Client) {
 		timeout = 3
 	}
 	c = &Client{
-		header: &Header{
+		header: Header{
 			values: map[string]string{
 				HEADER_KEY_CONTENT_TYPE: CONTENT_TYPE_NAME_X_WWW_FORM_URL_ENCODED,
 			},
 		},
-		cli: &http.Client{
+		cli: http.Client{
 			Timeout: time.Duration(timeout) * time.Second,
 		},
 	}
@@ -56,8 +56,22 @@ func (c *Client) Debug() {
 	log.SetLevel(0)
 }
 
-func (c *Client) Header() *Header {
+func (c *Client) Header() Header {
 	return c.header
+}
+
+func (c *Client) GetEx(strUrl string, values url.Values, v interface{}) (status int, err error) {
+	var r *Response
+	if r, err = c.Get(strUrl, values); err != nil {
+		return http.StatusBadGateway, err
+	}
+	if r.StatusCode == http.StatusOK {
+		if err = r.Unmarshal(v); err != nil {
+			log.Errorf("unmarshal response body data to struct error [%s]", err)
+			return r.StatusCode, err
+		}
+	}
+	return r.StatusCode, nil
 }
 
 //send a http request by GET method

@@ -11,7 +11,7 @@ func init() {
 }
 func main() {
 
-	c := httpc.NewHttpClient(3)
+	c := httpc.Client{}
 	r, err := c.Get("https://filfox.info/api/v1/address/f07749/blocks", url.Values{
 		"page":     []string{"0"},
 		"pageSize": []string{"5"},
