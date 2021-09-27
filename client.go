@@ -2,6 +2,7 @@ package httpc
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"github.com/civet148/log"
@@ -39,6 +40,9 @@ func newClient(timeout int, args ...interface{}) (c *Client) {
 	if timeout <= 0 {
 		timeout = 3
 	}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
 	c = &Client{
 		header: Header{
 			values: map[string]string{
@@ -46,7 +50,8 @@ func newClient(timeout int, args ...interface{}) (c *Client) {
 			},
 		},
 		cli: http.Client{
-			Timeout: time.Duration(timeout) * time.Second,
+			Transport: tr,
+			Timeout:   time.Duration(timeout) * time.Second,
 		},
 	}
 	return
