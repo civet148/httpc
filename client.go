@@ -37,11 +37,15 @@ func NewHttpsClient(timeout int, cer interface{}) *Client {
 
 func newClient(timeout int, args ...interface{}) (c *Client) {
 
+	var tlsConf = &tls.Config{InsecureSkipVerify: true}
 	if timeout <= 0 {
 		timeout = 3
 	}
+	if len(args) != 0 {
+		tlsConf = args[0].(*tls.Config)
+	}
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig: tlsConf,
 	}
 	c = &Client{
 		header: Header{
@@ -217,8 +221,6 @@ func (c *Client) get(strUrl string, values url.Values) (r *Response, err error) 
 		u.RawQuery = values.Encode()
 		strUrl = u.String()
 	}
-
-	log.Debugf("GET [%s]", strUrl)
 	return c.sendRequest(HTTP_METHOD_GET, strUrl, nil)
 }
 
