@@ -16,7 +16,7 @@ import (
 
 type Client struct {
 	cli    http.Client
-	header Header
+	header *Header
 }
 
 func init() {
@@ -48,7 +48,7 @@ func newClient(timeout int, args ...interface{}) (c *Client) {
 		TLSClientConfig: tlsConf,
 	}
 	c = &Client{
-		header: Header{
+		header: &Header{
 			values: map[string]string{
 				HEADER_KEY_CONTENT_TYPE: CONTENT_TYPE_NAME_X_WWW_FORM_URL_ENCODED,
 			},
@@ -65,7 +65,7 @@ func (c *Client) Debug() {
 	log.SetLevel(0)
 }
 
-func (c *Client) Header() Header {
+func (c *Client) Header() *Header {
 	return c.header
 }
 
