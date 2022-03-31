@@ -9,6 +9,12 @@ import (
 func init() {
 	log.SetLevel("debug")
 }
+
+type Params struct {
+	PageNo   int `json:"page_no"`
+	PageSize int `json:"page_size"`
+}
+
 func main() {
 
 	c := httpc.Client{}
@@ -27,4 +33,10 @@ func main() {
 		return
 	}
 	log.Debugf("Status code [%v] content type [%s] data [%+v]", r.StatusCode, r.ContentType, string(r.Body))
+
+	values := httpc.MakeQueryParams(&Params{
+		PageNo:   1,
+		PageSize: 100,
+	})
+	log.Infof("%+v", values)
 }
