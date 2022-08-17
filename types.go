@@ -1,6 +1,7 @@
 package httpc
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"net/http"
 )
@@ -31,6 +32,12 @@ const (
 	CONTENT_TYPE_NAME_TEXT_HTML              = "text/html"                         //content-type (html)
 	CONTENT_TYPE_NAME_OCTET_STREAM           = "application/octet-stream"          //content-type (binary)
 )
+
+type Option struct {
+	Timeout int
+	Header http.Header
+	TlsConf *tls.Config
+}
 
 type Response struct {
 	StatusCode  int

@@ -14,9 +14,10 @@ import (
 	"time"
 )
 
+
 type Client struct {
 	cli    http.Client
-	header Header
+	header http.Header
 }
 
 func init() {
@@ -24,38 +25,39 @@ func init() {
 }
 
 //new a normal http client with timeout (seconds)
-func NewHttpClient(timeout int) *Client {
-	return newClient(timeout)
+func NewHttpClient(opts...*Option) *Client {
+
+	return newClient(opts...)
 }
 
-//new a https client
-//timeout   timeout seconds
-//cer       PEM certification path
-func NewHttpsClient(timeout int, cer interface{}) *Client {
-	return newClient(timeout, cer)
-}
-
-func newClient(timeout int, args ...interface{}) (c *Client) {
-
-	var tlsConf = &tls.Config{InsecureSkipVerify: true}
-	if timeout <= 0 {
-		timeout = 3
+func newClient(opts...*Option) (c *Client) {
+	var header http.Header
+	var tlsConf *tls.Config
+	var opt = &Option{
+		Timeout: 30,
 	}
-	if len(args) != 0 {
-		tlsConf = args[0].(*tls.Config)
+	for _, o := range opts {
+		opt = o
 	}
+	if opt != nil {
+		header = opt.Header
+		tlsConf = opt.TlsConf
+	}
+	if header == nil {
+		header = http.Header{}
+	}
+	if tlsConf == nil {
+		tlsConf = &tls.Config{InsecureSkipVerify: true}
+	}
+
 	tr := &http.Transport{
 		TLSClientConfig: tlsConf,
 	}
 	c = &Client{
-		header: Header{
-			values: map[string]string{
-				HEADER_KEY_CONTENT_TYPE: CONTENT_TYPE_NAME_X_WWW_FORM_URL_ENCODED,
-			},
-		},
+		header: header,
 		cli: http.Client{
 			Transport: tr,
-			Timeout:   time.Duration(timeout) * time.Second,
+			Timeout:   time.Duration(opt.Timeout) * time.Second,
 		},
 	}
 	return
@@ -63,10 +65,6 @@ func newClient(timeout int, args ...interface{}) (c *Client) {
 
 func (c *Client) Debug() {
 	log.SetLevel(0)
-}
-
-func (c *Client) Header() *Header {
-	return &c.header
 }
 
 func (c *Client) GetEx(strUrl string, values url.Values, v interface{}) (status int, err error) {
@@ -234,9 +232,7 @@ func (c *Client) sendRequest(strMethod, strUrl string, body io.Reader) (r *Respo
 		return
 	}
 
-	for k, v := range c.header.values {
-		req.Header.Set(k, v)
-	}
+	req.Header = c.header
 
 	if resp, err = c.cli.Do(req); err != nil {
 		log.Errorf("send request error [%s]", err)
