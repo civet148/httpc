@@ -67,6 +67,11 @@ func (c *Client) Debug() {
 	log.SetLevel(0)
 }
 
+
+func (c *Client) Header() *http.Header {
+	return &c.header
+}
+
 func (c *Client) GetEx(strUrl string, values url.Values, v interface{}) (status int, err error) {
 	var r *Response
 	if r, err = c.Get(strUrl, values); err != nil {
