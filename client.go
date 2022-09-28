@@ -14,7 +14,6 @@ import (
 	"time"
 )
 
-
 type Client struct {
 	cli    http.Client
 	header http.Header
@@ -25,12 +24,12 @@ func init() {
 }
 
 //new a normal http client with timeout (seconds)
-func NewHttpClient(opts...*Option) *Client {
+func NewHttpClient(opts ...*Option) *Client {
 
 	return newClient(opts...)
 }
 
-func newClient(opts...*Option) (c *Client) {
+func newClient(opts ...*Option) (c *Client) {
 	var header http.Header
 	var tlsConf *tls.Config
 	var opt = &Option{
@@ -67,9 +66,26 @@ func (c *Client) Debug() {
 	log.SetLevel(0)
 }
 
+func (c *Client) Header() http.Header {
+	return c.header
+}
 
-func (c *Client) Header() *http.Header {
-	return &c.header
+func (c *Client) SetBasicAuth(username, password string) {
+	if c.header == nil {
+		c.header = http.Header{}
+	}
+	c.header.Set("Authorization", "Basic "+basicAuth(username, password))
+}
+
+func (c *Client) SetOAuth2(token string) {
+	c.SetBearerToken(token)
+}
+
+func (c *Client) SetBearerToken(token string) {
+	if c.header == nil {
+		c.header = http.Header{}
+	}
+	c.header.Set("Authorization", "Bearer "+token)
 }
 
 func (c *Client) GetEx(strUrl string, values url.Values, v interface{}) (status int, err error) {
