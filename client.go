@@ -11,12 +11,14 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 )
 
 type Client struct {
 	cli    http.Client
 	header http.Header
+	locker sync.RWMutex
 }
 
 func init() {
@@ -71,10 +73,7 @@ func (c *Client) Header() http.Header {
 }
 
 func (c *Client) SetBasicAuth(username, password string) {
-	if c.header == nil {
-		c.header = http.Header{}
-	}
-	c.header.Set("Authorization", "Basic "+basicAuth(username, password))
+	c.setHeader("Authorization", "Basic "+basicAuth(username, password))
 }
 
 func (c *Client) SetOAuth2(token string) {
@@ -82,10 +81,7 @@ func (c *Client) SetOAuth2(token string) {
 }
 
 func (c *Client) SetBearerToken(token string) {
-	if c.header == nil {
-		c.header = http.Header{}
-	}
-	c.header.Set("Authorization", "Bearer "+token)
+	c.setHeader("Authorization", "Bearer "+token)
 }
 
 func (c *Client) GetEx(strUrl string, values url.Values, v interface{}) (status int, err error) {
@@ -133,8 +129,8 @@ func (c *Client) GetJson(strUrl string, values url.Values, v interface{}) (statu
 }
 
 //send a http request by PUT method
-func (c *Client) Put(strUrl string) (r *Response, err error) {
-	return c.do(HTTP_METHOD_PUT, strUrl, nil)
+func (c *Client) Put(strUrl string, body io.Reader) (r *Response, err error) {
+	return c.SendRequest(c.header, HTTP_METHOD_PUT, strUrl, body)
 }
 
 //send a http request by DELETE method
@@ -155,36 +151,49 @@ func (c *Client) Patch(strUrl string) (r *Response, err error) {
 //send a http request by POST method with content-type specified
 //data type could be string,[]byte,url.Values,struct and so on
 func (c *Client) Post(strContentType string, strUrl string, data interface{}) (r *Response, err error) {
-	c.header.Set(HEADER_KEY_CONTENT_TYPE, strContentType)
+	c.setContentType(strContentType)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
 //send a http request by POST method with content-type application/json
 //data type could be string,[]byte,url.Values,struct and so on and
 func (c *Client) PostJson(strUrl string, data interface{}) (r *Response, err error) {
-	c.header.Set(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_APPLICATION_JSON)
+	c.setContentType(CONTENT_TYPE_NAME_APPLICATION_JSON)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
 //send a http request by POST method with content-type text/plain
 //data type must could be string,[]byte,url.Values,struct and so on
 func (c *Client) PostRaw(strUrl string, data interface{}) (r *Response, err error) {
-	c.header.Set(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_TEXT_PLAIN)
+	c.setContentType(CONTENT_TYPE_NAME_TEXT_PLAIN)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
 //send a http request by POST method with content-type multipart/form-data
 //data type must could be string,[]byte,url.Values,struct and so on
 func (c *Client) PostFormData(strUrl string, data interface{}) (r *Response, err error) {
-	c.header.Set(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_MULTIPART_FORM_DATA)
+	c.setContentType(CONTENT_TYPE_NAME_MULTIPART_FORM_DATA)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
 //send a http request by POST method with content-type multipart/form-data
 //data type must could be string,[]byte,url.Values,struct and so on
 func (c *Client) PostFormUrlEncoded(strUrl string, data interface{}) (r *Response, err error) {
-	c.header.Set(HEADER_KEY_CONTENT_TYPE, CONTENT_TYPE_NAME_X_WWW_FORM_URL_ENCODED)
+	c.setContentType(CONTENT_TYPE_NAME_X_WWW_FORM_URL_ENCODED)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
+}
+
+func (c *Client) setHeader(key, value string)	{
+	c.locker.Lock()
+	if c.header == nil {
+		c.header = http.Header{}
+	}
+	c.header.Set(key, value)
+	c.locker.Unlock()
+}
+
+func (c *Client) setContentType(contentType string)	{
+	c.setHeader(HEADER_KEY_CONTENT_TYPE, contentType)
 }
 
 //do send request to destination host
@@ -224,7 +233,7 @@ func (c *Client) do(strMethod, strUrl string, data interface{}) (r *Response, er
 		}
 	}
 
-	if r, err = c.sendRequest(strMethod, strUrl, body); err != nil {
+	if r, err = c.SendRequest(c.header, strMethod, strUrl, body); err != nil {
 		return
 	}
 	return
@@ -240,10 +249,10 @@ func (c *Client) get(strUrl string, values url.Values) (r *Response, err error) 
 		u.RawQuery = values.Encode()
 		strUrl = u.String()
 	}
-	return c.sendRequest(HTTP_METHOD_GET, strUrl, nil)
+	return c.SendRequest(c.header, HTTP_METHOD_GET, strUrl, nil)
 }
 
-func (c *Client) sendRequest(strMethod, strUrl string, body io.Reader) (r *Response, err error) {
+func (c *Client) SendRequest(header http.Header, strMethod, strUrl string, body io.Reader) (r *Response, err error) {
 
 	var req *http.Request
 	var resp *http.Response
@@ -253,7 +262,7 @@ func (c *Client) sendRequest(strMethod, strUrl string, body io.Reader) (r *Respo
 		return
 	}
 
-	req.Header = c.header
+	req.Header = header
 
 	if resp, err = c.cli.Do(req); err != nil {
 		log.Errorf("send request error [%s]", err)
