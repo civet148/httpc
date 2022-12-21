@@ -146,7 +146,7 @@ var uploadCmd = &cli.Command{
 			val := strings.TrimSpace(kvs[1])
 			params[key] = val
 		}
-		resp, err := c.PostFormDataMultipart("http://192.168.2.226:8089/api/v1/chain/upload/image", params)
+		resp, err := c.PostFormDataMultipart(cctx.String(CMD_FLAG_NAME_URL), params)
 		if err != nil {
 			return log.Errorf(err.Error())
 		}
