@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/civet148/httpc"
 	"github.com/civet148/httpc/mock"
 	"github.com/civet148/log"
 	"github.com/gin-gonic/gin"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 )
 
 const (
@@ -27,11 +29,14 @@ const (
 )
 
 const (
-	CMD_NAME_RUN = "run"
+	CMD_NAME_RUN    = "run"
+	CMD_NAME_UPLOAD = "upload"
 )
 
 const (
 	CMD_FLAG_NAME_DATA_RAW = "data-raw"
+	CMD_FLAG_NAME_FORM     = "form"
+	CMD_FLAG_NAME_URL      = "url"
 )
 
 func init() {
@@ -64,6 +69,7 @@ func main() {
 
 	local := []*cli.Command{
 		runCmd,
+		uploadCmd,
 	}
 	app := &cli.App{
 		Name:     ProgramName,
@@ -102,10 +108,57 @@ var runCmd = &cli.Command{
 	},
 }
 
+/*
+curl --location --request POST 'http://192.168.2.226:8089/api/v1/chain/upload/image' \
+--form 'image_name="abc.jpg"' \
+--form 'image_file=@"/E:/protopb/agent.proto"'
+
+ make && ./httpc upload --form "image_name=a.jpg,image_file=@/tmp/a.jpg" --url http://192.168.2.226:8089/api/v1/chain/upload/image
+*/
+var uploadCmd = &cli.Command{
+	Name:  CMD_NAME_UPLOAD,
+	Usage: "upload file",
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  CMD_FLAG_NAME_URL,
+			Usage: "url to upload",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:  CMD_FLAG_NAME_FORM,
+			Usage: "image_name=xxx.jpg,image_file=@/tmp/xxx.jpg",
+		},
+	},
+	Action: func(cctx *cli.Context) error {
+		c := httpc.NewHttpClient()
+		form := cctx.String(CMD_FLAG_NAME_FORM)
+		if form == "" {
+			return log.Errorf("form-data key & value requires")
+		}
+		formKVS := strings.Split(cctx.String(CMD_FLAG_NAME_FORM), ",")
+		var params = make(map[string]string)
+		for _, kv := range formKVS {
+			kvs := strings.Split(kv, "=")
+			if len(kvs) != 2 {
+				return log.Errorf("key/value pair [%s] illegal", kv)
+			}
+			key := strings.TrimSpace(kvs[0])
+			val := strings.TrimSpace(kvs[1])
+			params[key] = val
+		}
+		resp, err := c.PostFormDataMultipart("http://192.168.2.226:8089/api/v1/chain/upload/image", params)
+		if err != nil {
+			return log.Errorf(err.Error())
+		}
+		log.Infof("upload file response [%s]", resp.Body)
+		return nil
+	},
+}
+
 type Manager struct {
 	*mock.Controller
-	cfg       *mock.Config
-	router    *gin.Engine
+	cfg    *mock.Config
+	router *gin.Engine
 }
 
 func NewManager(cfg *mock.Config) *Manager {
@@ -142,7 +195,7 @@ func (m *Manager) initRouterMgr() (r *gin.Engine) {
 	return m.router
 }
 
-func initRouterWebSocket(r *gin.Engine,  ws mock.WebSocketApi) {
+func initRouterWebSocket(r *gin.Engine, ws mock.WebSocketApi) {
 	r.GET(RouterSubPathFilecoinRpcV0, ws.WebSocketRpcV1)
 	r.GET(RouterSubPathFilecoinRpcV1, ws.WebSocketRpcV1)
 }

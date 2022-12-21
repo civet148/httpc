@@ -8,12 +8,20 @@ import (
 	"github.com/civet148/log"
 	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 )
+
+type uploadFile struct {
+	Name     string
+	FilePath string
+}
 
 type Client struct {
 	cli    http.Client
@@ -176,6 +184,21 @@ func (c *Client) PostFormData(strUrl string, data interface{}) (r *Response, err
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
+/*
+send a http request by POST method with content-type multipart/form-data
+kvs a map of key=value, if the value is a file path please use @ as prefix
+example:
+
+var params = map[string]string{
+      "image_name":"a.jpg",
+      "image_file":"@/tmp/a.jpg"
+}
+*/
+func (c *Client) PostFormDataMultipart(strUrl string, params map[string]string) (r *Response, err error) {
+	c.setContentType(CONTENT_TYPE_NAME_MULTIPART_FORM_DATA)
+	return c.doUpload(strUrl, params)
+}
+
 //send a http request by POST method with content-type multipart/form-data
 //data type must could be string,[]byte,url.Values,struct and so on
 func (c *Client) PostFormUrlEncoded(strUrl string, data interface{}) (r *Response, err error) {
@@ -183,7 +206,7 @@ func (c *Client) PostFormUrlEncoded(strUrl string, data interface{}) (r *Respons
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
-func (c *Client) setHeader(key, value string)	{
+func (c *Client) setHeader(key, value string) {
 	c.locker.Lock()
 	if c.header == nil {
 		c.header = http.Header{}
@@ -192,7 +215,7 @@ func (c *Client) setHeader(key, value string)	{
 	c.locker.Unlock()
 }
 
-func (c *Client) setContentType(contentType string)	{
+func (c *Client) setContentType(contentType string) {
 	c.setHeader(HEADER_KEY_CONTENT_TYPE, contentType)
 }
 
@@ -281,4 +304,55 @@ func (c *Client) SendRequest(header http.Header, strMethod, strUrl string, body 
 		return
 	}
 	return
+}
+
+func (c *Client) doUpload(strUrl string, params map[string]string) (r *Response, err error) {
+	var body io.Reader
+	var contentType string
+	body, contentType, err = c.getReader(params)
+	if err != nil {
+		return nil, log.Errorf(err.Error())
+	}
+	c.setHeader(HEADER_KEY_CONTENT_TYPE, contentType)
+	return c.SendRequest(c.header, HTTP_METHOD_POST, strUrl, body)
+}
+
+func (c *Client) getReader(params map[string]string) (reader io.Reader, contentType string, err error) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	defer writer.Close()
+	for k, v := range params {
+		if strings.HasPrefix(v, "@") {
+			path := v[1:]
+			upfile := &uploadFile{
+				Name:     k,
+				FilePath: path,
+			}
+			var file *os.File
+
+			file, err = os.Open(upfile.FilePath)
+			if err != nil {
+				return reader, "", log.Errorf("open file [%s] error [%s]", upfile.FilePath, err)
+			}
+			defer file.Close()
+			log.Debugf("open file [%s] ok", upfile.FilePath)
+			var part io.Writer
+			part, err = writer.CreateFormFile(upfile.Name, filepath.Base(upfile.FilePath))
+			log.Debugf("writer.CreateFormFile field name [%s] file name [%s]", upfile.Name, filepath.Base(upfile.FilePath))
+			if err != nil {
+				return reader, "", log.Errorf("writer.CreateFormFile field name [%s] file name [%s] error [%s]", upfile.Name, filepath.Base(upfile.FilePath), err)
+			}
+			_, err = io.Copy(part, file)
+			if err != nil {
+				return reader, "", log.Errorf("io.Copy error [%s]", err)
+			}
+		} else {
+			err = writer.WriteField(k, v)
+			if err != nil {
+				return reader, "", log.Errorf("write key %s value %s error %s", k, v, err.Error())
+			}
+		}
+	}
+
+	return body, writer.FormDataContentType(), nil
 }
