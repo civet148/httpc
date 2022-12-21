@@ -29,14 +29,16 @@ const (
 )
 
 const (
-	CMD_NAME_RUN    = "run"
-	CMD_NAME_UPLOAD = "upload"
+	CMD_NAME_RUN      = "run"
+	CMD_NAME_UPLOAD   = "upload"
+	CMD_NAME_DOWNLOAD = "download"
 )
 
 const (
 	CMD_FLAG_NAME_DATA_RAW = "data-raw"
 	CMD_FLAG_NAME_FORM     = "form"
 	CMD_FLAG_NAME_URL      = "url"
+	CMD_FLAG_NAME_OUTPUT   = "output"
 )
 
 func init() {
@@ -70,6 +72,7 @@ func main() {
 	local := []*cli.Command{
 		runCmd,
 		uploadCmd,
+		downloadCmd,
 	}
 	app := &cli.App{
 		Name:     ProgramName,
@@ -120,8 +123,8 @@ var uploadCmd = &cli.Command{
 	Usage: "upload file",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
-			Name:  CMD_FLAG_NAME_URL,
-			Usage: "url to upload",
+			Name:     CMD_FLAG_NAME_URL,
+			Usage:    "url to upload",
 			Required: true,
 		},
 		&cli.StringFlag{
@@ -151,6 +154,41 @@ var uploadCmd = &cli.Command{
 			return log.Errorf(err.Error())
 		}
 		log.Infof("upload file response [%s]", resp.Body)
+		return nil
+	},
+}
+
+/*
+curl --location --request GET 'http://192.168.2.226:8089/dcs-system/images/1671611965cup01.jpg'
+
+ make && ./httpc download --output /tmp/cpu01.jpg 'http://192.168.2.226:8089/dcs-system/images/1671611965cup01.jpg'
+*/
+var downloadCmd = &cli.Command{
+	Name:  CMD_NAME_DOWNLOAD,
+	Usage: "download file",
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:     CMD_FLAG_NAME_OUTPUT,
+			Usage:    "save to file",
+			Aliases:  []string{"o"},
+			Required: true,
+		},
+	},
+	Action: func(cctx *cli.Context) error {
+		c := httpc.NewHttpClient()
+		strOutput := cctx.String(CMD_FLAG_NAME_OUTPUT)
+		if strOutput == "" {
+			return log.Errorf("output file path requires")
+		}
+		strUrl := cctx.Args().First()
+		if strUrl == "" {
+			return log.Errorf("download url requires")
+		}
+		_, err := c.SaveFile(strUrl, strOutput)
+		if err != nil {
+			return log.Errorf(err.Error())
+		}
+		log.Infof("download to [%s] successful", strOutput)
 		return nil
 	},
 }

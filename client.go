@@ -111,6 +111,43 @@ func (c *Client) Get(strUrl string, values url.Values) (r *Response, err error) 
 	return c.get(strUrl, values)
 }
 
+
+//send a http request by GET method and copy to writter
+func (c *Client) CopyFile(strUrl string, writer io.Writer) (written int64, err error) {
+	var r *http.Response
+	r, err = http.Get(strUrl)
+	if err != nil {
+		return 0, err
+	}
+	defer r.Body.Close()
+	written, err = io.Copy(writer, r.Body)
+	if err != nil {
+		return 0, err
+	}
+	return
+}
+
+//send a http request by GET method and save to file
+func (c *Client) SaveFile(strUrl string, strFilePath string) (written int64, err error) {
+	var r *http.Response
+	r, err = http.Get(strUrl)
+	if err != nil {
+		return 0, err
+	}
+	defer r.Body.Close()
+	var dst *os.File
+	dst, err = os.Create(strFilePath)
+	if err != nil {
+		return 0, err
+	}
+	defer dst.Close()
+	written, err = io.Copy(dst, r.Body)
+	if err != nil {
+		return 0, err
+	}
+	return
+}
+
 //send a http request by POST method with application/x-www-form-urlencoded
 func (c *Client) PostUrlEncoded(strUrl string, values url.Values) (r *Response, err error) {
 	return c.do(HTTP_METHOD_POST, strUrl, values)
