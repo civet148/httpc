@@ -4,6 +4,7 @@ import (
 	"github.com/civet148/httpc"
 	"github.com/civet148/log"
 	"net/url"
+	"time"
 )
 
 func init() {
@@ -27,16 +28,21 @@ func main() {
 		log.Errorf("GET error [%s]", err)
 		return
 	}
-	r, err = c.Get("https://filfox.info/api/v1/address/f07749/blocks?page=1&pageSize=5", nil)
-	if err != nil {
-		log.Errorf("GET error [%s]", err)
-		return
+	for i := 0; i < 5; i++ {
+		r, err = c.Get("https://filfox.info/api/v1/address/f07749/blocks?page=1&pageSize=5", nil)
+		if err != nil {
+			log.Errorf("GET error [%s]", err)
+			return
+		}
+		log.Debugf("[%d] response code [%v] content type [%s] data [%+v]", i, r.StatusCode, r.ContentType, string(r.Body))
+		time.Sleep(2 * time.Second)
 	}
-	log.Debugf("Status code [%v] content type [%s] data [%+v]", r.StatusCode, r.ContentType, string(r.Body))
-
 	values := httpc.MakeQueryParams(&Params{
 		PageNo:   1,
 		PageSize: 100,
 	})
+
 	log.Infof("%+v", values)
+	c.Close()
+	time.Sleep(2 * time.Minute)
 }

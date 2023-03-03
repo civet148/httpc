@@ -72,6 +72,10 @@ func newClient(opts ...*Option) (c *Client) {
 	return
 }
 
+func (c *Client) Close() {
+	c.cli.CloseIdleConnections()
+}
+
 func (c *Client) Debug() {
 	log.SetLevel(0)
 }
@@ -110,7 +114,6 @@ func (c *Client) GetEx(strUrl string, values url.Values, v interface{}) (status 
 func (c *Client) Get(strUrl string, values url.Values) (r *Response, err error) {
 	return c.get(strUrl, values)
 }
-
 
 //send a http request by GET method and copy to writter
 func (c *Client) CopyFile(strUrl string, writer io.Writer) (written int64, err error) {
