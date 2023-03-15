@@ -85,7 +85,7 @@ func (c *Client) Header() http.Header {
 }
 
 func (c *Client) SetBasicAuth(username, password string) {
-	c.setHeader("Authorization", "Basic "+basicAuth(username, password))
+	c.setHeader(HEADER_KEY_AUTHORIZATION, "Basic "+basicAuth(username, password))
 }
 
 func (c *Client) SetOAuth2(token string) {
@@ -93,7 +93,7 @@ func (c *Client) SetOAuth2(token string) {
 }
 
 func (c *Client) SetBearerToken(token string) {
-	c.setHeader("Authorization", "Bearer "+token)
+	c.setHeader(HEADER_KEY_AUTHORIZATION, "Bearer "+token)
 }
 
 func (c *Client) GetEx(strUrl string, values url.Values, v interface{}) (status int, err error) {
