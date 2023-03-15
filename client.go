@@ -271,17 +271,14 @@ func (c *Client) do(strMethod, strUrl string, data interface{}) (r *Response, er
 			{
 				values := data.(url.Values)
 				body = strings.NewReader(values.Encode())
-				log.Debug("url.Values -> [%+v]", values)
 			}
 		case string:
 			{
 				body = strings.NewReader(data.(string))
-				log.Debug("string -> [%s]", data.(string))
 			}
 		case []byte:
 			{
 				body = bytes.NewReader(data.([]byte))
-				log.Debug("[]byte -> [%s]", data.([]byte))
 			}
 		default:
 			{
@@ -291,7 +288,6 @@ func (c *Client) do(strMethod, strUrl string, data interface{}) (r *Response, er
 					return
 				}
 				body = bytes.NewReader(jsonData)
-				log.Debug("object -> [%s]", jsonData)
 			}
 		}
 	}
