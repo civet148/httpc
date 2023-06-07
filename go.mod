@@ -8,4 +8,5 @@ require (
 	github.com/gin-gonic/gin v1.8.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/urfave/cli/v2 v2.23.7
+	github.com/valyala/fastjson v1.6.4
 )

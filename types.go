@@ -3,6 +3,8 @@ package httpc
 import (
 	"crypto/tls"
 	"encoding/json"
+	"github.com/civet148/log"
+	"github.com/valyala/fastjson"
 	"net/http"
 )
 
@@ -35,7 +37,7 @@ const (
 
 type Option struct {
 	Timeout int
-	Header http.Header
+	Header  http.Header
 	TlsConf *tls.Config
 }
 
@@ -47,4 +49,22 @@ type Response struct {
 
 func (r *Response) Unmarshal(v interface{}) (err error) {
 	return json.Unmarshal(r.Body, v)
+}
+
+func (r *Response) Get(path string, data interface{}) (err error) {
+	var values *fastjson.Value
+	values, err = fastjson.Parse(string(r.Body))
+	if err != nil {
+		return log.Errorf(err.Error())
+	}
+	v := values.Get(path)
+	if v != nil {
+		var value []byte
+		value = v.MarshalTo(nil)
+		err = json.Unmarshal(value, &data)
+		if err != nil {
+			return log.Errorf("unmarshal path [%s] value '%s' error [%s]", path, value, err.Error())
+		}
+	}
+	return nil
 }
