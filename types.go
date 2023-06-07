@@ -61,7 +61,7 @@ func (r *Response) Get(path string, data interface{}) (err error) {
 	if v != nil {
 		var value []byte
 		value = v.MarshalTo(nil)
-		err = json.Unmarshal(value, &data)
+		err = json.Unmarshal(value, data)
 		if err != nil {
 			return log.Errorf("unmarshal path [%s] value '%s' error [%s]", path, value, err.Error())
 		}
