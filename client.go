@@ -33,7 +33,7 @@ func init() {
 	log.SetLevel(log.LEVEL_INFO)
 }
 
-//new a normal http client with timeout (seconds)
+// new a normal http client with timeout (seconds)
 func NewHttpClient(opts ...*Option) *Client {
 
 	return newClient(opts...)
@@ -81,6 +81,9 @@ func (c *Client) Debug() {
 }
 
 func (c *Client) Header() http.Header {
+	if c.header == nil {
+		c.header = http.Header{}
+	}
 	return c.header
 }
 
@@ -110,12 +113,12 @@ func (c *Client) GetEx(strUrl string, values url.Values, v interface{}) (status 
 	return r.StatusCode, nil
 }
 
-//send a http request by GET method
+// send a http request by GET method
 func (c *Client) Get(strUrl string, values url.Values) (r *Response, err error) {
 	return c.get(strUrl, values)
 }
 
-//send a http request by GET method and copy to writter
+// send a http request by GET method and copy to writter
 func (c *Client) CopyFile(strUrl string, writer io.Writer) (written int64, err error) {
 	var r *http.Response
 	r, err = http.Get(strUrl)
@@ -130,7 +133,7 @@ func (c *Client) CopyFile(strUrl string, writer io.Writer) (written int64, err e
 	return
 }
 
-//send a http request by GET method and save to file
+// send a http request by GET method and save to file
 func (c *Client) SaveFile(strUrl string, strFilePath string) (written int64, err error) {
 	var r *http.Response
 	r, err = http.Get(strUrl)
@@ -151,12 +154,12 @@ func (c *Client) SaveFile(strUrl string, strFilePath string) (written int64, err
 	return
 }
 
-//send a http request by POST method with application/x-www-form-urlencoded
+// send a http request by POST method with application/x-www-form-urlencoded
 func (c *Client) PostUrlEncoded(strUrl string, values url.Values) (r *Response, err error) {
 	return c.do(HTTP_METHOD_POST, strUrl, values)
 }
 
-//send a http request by GET method and unmarshal json data to struct v
+// send a http request by GET method and unmarshal json data to struct v
 func (c *Client) GetJson(strUrl string, values url.Values, v interface{}) (status int, err error) {
 	var r *Response
 	if r, err = c.get(strUrl, values); err != nil {
@@ -176,49 +179,49 @@ func (c *Client) GetJson(strUrl string, values url.Values, v interface{}) (statu
 	return http.StatusOK, nil
 }
 
-//send a http request by PUT method
+// send a http request by PUT method
 func (c *Client) Put(strUrl string, body io.Reader) (r *Response, err error) {
 	return c.SendRequest(c.header, HTTP_METHOD_PUT, strUrl, body)
 }
 
-//send a http request by DELETE method
+// send a http request by DELETE method
 func (c *Client) Delete(strUrl string) (r *Response, err error) {
 	return c.do(HTTP_METHOD_DELETE, strUrl, nil)
 }
 
-//send a http request by TRACE method
+// send a http request by TRACE method
 func (c *Client) Trace(strUrl string) (r *Response, err error) {
 	return c.do(HTTP_METHOD_TRACE, strUrl, nil)
 }
 
-//send a http request by PATCH method
+// send a http request by PATCH method
 func (c *Client) Patch(strUrl string) (r *Response, err error) {
 	return c.do(HTTP_METHOD_PATCH, strUrl, nil)
 }
 
-//send a http request by POST method with content-type specified
-//data type could be string,[]byte,url.Values,struct and so on
+// send a http request by POST method with content-type specified
+// data type could be string,[]byte,url.Values,struct and so on
 func (c *Client) Post(strContentType string, strUrl string, data interface{}) (r *Response, err error) {
 	c.setContentType(strContentType)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
-//send a http request by POST method with content-type application/json
-//data type could be string,[]byte,url.Values,struct and so on and
+// send a http request by POST method with content-type application/json
+// data type could be string,[]byte,url.Values,struct and so on and
 func (c *Client) PostJson(strUrl string, data interface{}) (r *Response, err error) {
 	c.setContentType(CONTENT_TYPE_NAME_APPLICATION_JSON)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
-//send a http request by POST method with content-type text/plain
-//data type must could be string,[]byte,url.Values,struct and so on
+// send a http request by POST method with content-type text/plain
+// data type must could be string,[]byte,url.Values,struct and so on
 func (c *Client) PostRaw(strUrl string, data interface{}) (r *Response, err error) {
 	c.setContentType(CONTENT_TYPE_NAME_TEXT_PLAIN)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
 }
 
-//send a http request by POST method with content-type multipart/form-data
-//data type must could be string,[]byte,url.Values,struct and so on
+// send a http request by POST method with content-type multipart/form-data
+// data type must could be string,[]byte,url.Values,struct and so on
 func (c *Client) PostFormData(strUrl string, data interface{}) (r *Response, err error) {
 	c.setContentType(CONTENT_TYPE_NAME_MULTIPART_FORM_DATA)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
@@ -229,18 +232,18 @@ send a http request by POST method with content-type multipart/form-data
 kvs a map of key=value, if the value is a file path please use @ as prefix
 example:
 
-var params = map[string]string{
-      "image_name":"a.jpg",
-      "image_file":"@/tmp/a.jpg"
-}
+	var params = map[string]string{
+	      "image_name":"a.jpg",
+	      "image_file":"@/tmp/a.jpg"
+	}
 */
 func (c *Client) PostFormDataMultipart(strUrl string, params map[string]string) (r *Response, err error) {
 	c.setContentType(CONTENT_TYPE_NAME_MULTIPART_FORM_DATA)
 	return c.doUpload(strUrl, params)
 }
 
-//send a http request by POST method with content-type multipart/form-data
-//data type must could be string,[]byte,url.Values,struct and so on
+// send a http request by POST method with content-type multipart/form-data
+// data type must could be string,[]byte,url.Values,struct and so on
 func (c *Client) PostFormUrlEncoded(strUrl string, data interface{}) (r *Response, err error) {
 	c.setContentType(CONTENT_TYPE_NAME_X_WWW_FORM_URL_ENCODED)
 	return c.do(HTTP_METHOD_POST, strUrl, data)
@@ -259,7 +262,7 @@ func (c *Client) setContentType(contentType string) {
 	c.setHeader(HEADER_KEY_CONTENT_TYPE, contentType)
 }
 
-//do send request to destination host
+// do send request to destination host
 func (c *Client) do(strMethod, strUrl string, data interface{}) (r *Response, err error) {
 
 	var body io.Reader

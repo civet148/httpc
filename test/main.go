@@ -23,8 +23,8 @@ func main() {
 	c := &httpc.Client{}
 	defer c.Close()
 
-	FastJson()
-	//FilfoxGet(c)
+	//FastJson()
+	FilfoxGet(c)
 }
 
 func FilfoxGet(c *httpc.Client) {
