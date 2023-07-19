@@ -3,9 +3,11 @@ package httpc
 import (
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"github.com/civet148/log"
 	"github.com/valyala/fastjson"
 	"net/http"
+	"net/url"
 )
 
 const (
@@ -68,4 +70,34 @@ func (r *Response) Get(path string, data interface{}) (err error) {
 		}
 	}
 	return nil
+}
+
+type UrlValues url.Values
+
+func NewUrlValues() UrlValues {
+	return UrlValues{}
+}
+
+func (u UrlValues) Add(key string, value interface{}) UrlValues {
+	strVal := fmt.Sprintf("%v", value)
+	s, ok := u[key]
+	if !ok {
+		u[key] = []string{strVal}
+	} else {
+		for _, v := range s {
+			if v == strVal {
+				return u
+			}
+		}
+		s = append(s, strVal)
+	}
+	return u
+}
+
+func (u UrlValues) Remove(key string) {
+	delete(u, key)
+}
+
+func (u UrlValues) Values() url.Values {
+	return url.Values(u)
 }
