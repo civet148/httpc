@@ -87,6 +87,14 @@ func (c *Client) Header() http.Header {
 	return c.header
 }
 
+func (c *Client) SetHeader(key, value string) {
+	c.setHeader(key, value)
+}
+
+func (c *Client) SetToken(token string) {
+	c.setHeader(HEADER_KEY_TOKEN, token)
+}
+
 func (c *Client) SetBasicAuth(username, password string) {
 	c.setHeader(HEADER_KEY_AUTHORIZATION, "Basic "+basicAuth(username, password))
 }

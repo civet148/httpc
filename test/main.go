@@ -28,6 +28,7 @@ func main() {
 }
 
 func FilfoxGet(c *httpc.Client) {
+	c.Header().Set("token", "12345678901234567890")
 	r, err := c.Get("https://filfox.info/api/v1/address/f07749/blocks", url.Values{
 		"page":     []string{"0"},
 		"pageSize": []string{"5"},
@@ -37,7 +38,7 @@ func FilfoxGet(c *httpc.Client) {
 		log.Errorf("GET error [%s]", err)
 		return
 	}
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 2; i++ {
 		r, err = c.Get("https://filfox.info/api/v1/address/f07749/blocks?page=1&pageSize=5", nil)
 		if err != nil {
 			log.Errorf("GET error [%s]", err)

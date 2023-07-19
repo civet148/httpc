@@ -24,6 +24,7 @@ const (
 	HEADER_KEY_CONTENT_TYPE   = "Content-Type"
 	HEADER_KEY_AUTHORIZATION  = "Authorization"
 	HEADER_KEY_CONTENT_LENGTH = "Content-Length"
+	HEADER_KEY_TOKEN          = "token"
 )
 
 const (
