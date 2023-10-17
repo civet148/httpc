@@ -369,6 +369,7 @@ func (c *Client) getReader(params map[string]string) (reader io.Reader, contentT
 	writer := multipart.NewWriter(body)
 	defer writer.Close()
 	for k, v := range params {
+
 		if strings.HasPrefix(v, "@") {
 			path := v[1:]
 			upfile := &uploadFile{
@@ -376,13 +377,16 @@ func (c *Client) getReader(params map[string]string) (reader io.Reader, contentT
 				FilePath: path,
 			}
 			var file *os.File
-
 			file, err = os.Open(upfile.FilePath)
-			if err != nil {
-				return reader, "", log.Errorf("open file [%s] error [%s]", upfile.FilePath, err)
+			if err != nil { //not a local file
+				err = writer.WriteField(k, v)
+				if err != nil {
+					return reader, "", log.Errorf("write key %s value %s error %s", k, v, err.Error())
+				}
+				continue
 			}
 			defer file.Close()
-			log.Debugf("open file [%s] ok", upfile.FilePath)
+
 			var part io.Writer
 			part, err = writer.CreateFormFile(upfile.Name, filepath.Base(upfile.FilePath))
 			log.Debugf("writer.CreateFormFile field name [%s] file name [%s]", upfile.Name, filepath.Base(upfile.FilePath))
@@ -393,11 +397,11 @@ func (c *Client) getReader(params map[string]string) (reader io.Reader, contentT
 			if err != nil {
 				return reader, "", log.Errorf("io.Copy error [%s]", err)
 			}
-		} else {
-			err = writer.WriteField(k, v)
-			if err != nil {
-				return reader, "", log.Errorf("write key %s value %s error %s", k, v, err.Error())
-			}
+		}
+
+		err = writer.WriteField(k, v)
+		if err != nil {
+			return reader, "", log.Errorf("write key %s value %s error %s", k, v, err.Error())
 		}
 	}
 
