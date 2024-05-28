@@ -42,9 +42,7 @@ func NewHttpClient(opts ...*Option) *Client {
 func newClient(opts ...*Option) (c *Client) {
 	var header http.Header
 	var tlsConf *tls.Config
-	var opt = &Option{
-		Timeout: 30,
-	}
+	var opt *Option
 	for _, o := range opts {
 		opt = o
 	}
@@ -52,24 +50,20 @@ func newClient(opts ...*Option) (c *Client) {
 		header = opt.Header
 		tlsConf = opt.TlsConf
 	}
-	if header == nil {
-		header = http.Header{}
+	var transport http.RoundTripper
+	if tlsConf != nil {
+		transport = &http.Transport{
+			TLSClientConfig: tlsConf,
+		}
 	}
-	if tlsConf == nil {
-		//tlsConf = &tls.Config{InsecureSkipVerify: true}
-	}
-
-	tr := &http.Transport{
-		TLSClientConfig: tlsConf,
-	}
-	c = &Client{
+	log.Debugf("TLS transport [%+v]", transport)
+	return &Client{
 		header: header,
 		cli: http.Client{
-			Transport: tr,
+			Transport: transport,
 			Timeout:   time.Duration(opt.Timeout) * time.Second,
 		},
 	}
-	return
 }
 
 func (c *Client) Close() {
@@ -332,7 +326,9 @@ func (c *Client) SendRequest(header http.Header, strMethod, strUrl string, body 
 		return
 	}
 
-	req.Header = header
+	if header != nil {
+		req.Header = header
+	}
 
 	if resp, err = c.cli.Do(req); err != nil {
 		log.Errorf("send request error [%s]", err)

@@ -202,8 +202,19 @@ var getCmd = &cli.Command{
 	Flags:     []cli.Flag{},
 	Action: func(cctx *cli.Context) error {
 		strUrl := cctx.Args().First()
-		resp, err := http.Get(strUrl)
+		//resp, err := http.Get(strUrl)
+		//if err != nil {
+		//	return log.Errorf("send request error [%s]", err)
+		//}
+
+		req, err := http.NewRequest("GET", strUrl, nil)
 		if err != nil {
+			return log.Errorf("new request error [%s]", err)
+		}
+		var cli = http.Client{}
+		var resp *http.Response
+		if resp, err = cli.Do(req); err != nil {
+
 			return log.Errorf("send request error [%s]", err)
 		}
 
