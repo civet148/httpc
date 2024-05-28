@@ -7,6 +7,7 @@ import (
 	"github.com/civet148/log"
 	"github.com/gin-gonic/gin"
 	"github.com/urfave/cli/v2"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -32,6 +33,7 @@ const (
 	CMD_NAME_RUN      = "run"
 	CMD_NAME_UPLOAD   = "upload"
 	CMD_NAME_DOWNLOAD = "download"
+	CMD_NAME_GET      = "get"
 )
 
 const (
@@ -73,6 +75,7 @@ func main() {
 		runCmd,
 		uploadCmd,
 		downloadCmd,
+		getCmd,
 	}
 	app := &cli.App{
 		Name:     ProgramName,
@@ -116,7 +119,7 @@ curl --location --request POST 'http://192.168.2.226:8089/api/v1/chain/upload/im
 --form 'image_name="abc.jpg"' \
 --form 'image_file=@"/E:/protopb/agent.proto"'
 
- make && ./httpc upload --form "image_name=a.jpg,image_file=@/tmp/a.jpg" --url http://192.168.2.226:8089/api/v1/chain/upload/image
+	make && ./httpc upload --form "image_name=a.jpg,image_file=@/tmp/a.jpg" --url http://192.168.2.226:8089/api/v1/chain/upload/image
 */
 var uploadCmd = &cli.Command{
 	Name:  CMD_NAME_UPLOAD,
@@ -161,7 +164,7 @@ var uploadCmd = &cli.Command{
 /*
 curl --location --request GET 'http://192.168.2.226:8089/dcs-system/images/1671611965cup01.jpg'
 
- make && ./httpc download --output /tmp/cpu01.jpg 'http://192.168.2.226:8089/dcs-system/images/1671611965cup01.jpg'
+	make && ./httpc download --output /tmp/cpu01.jpg 'http://192.168.2.226:8089/dcs-system/images/1671611965cup01.jpg'
 */
 var downloadCmd = &cli.Command{
 	Name:  CMD_NAME_DOWNLOAD,
@@ -189,6 +192,28 @@ var downloadCmd = &cli.Command{
 			return log.Errorf(err.Error())
 		}
 		log.Infof("download to [%s] successful", strOutput)
+		return nil
+	},
+}
+
+var getCmd = &cli.Command{
+	Name:      CMD_NAME_GET,
+	ArgsUsage: "<url>",
+	Flags:     []cli.Flag{},
+	Action: func(cctx *cli.Context) error {
+		strUrl := cctx.Args().First()
+		resp, err := http.Get(strUrl)
+		if err != nil {
+			return log.Errorf("send request error [%s]", err)
+		}
+
+		defer resp.Body.Close()
+		// 读取并输出响应内容
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return log.Errorf("read body error: %s", err)
+		}
+		log.Infof("response [%s]", body)
 		return nil
 	},
 }

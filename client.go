@@ -56,7 +56,7 @@ func newClient(opts ...*Option) (c *Client) {
 		header = http.Header{}
 	}
 	if tlsConf == nil {
-		tlsConf = &tls.Config{InsecureSkipVerify: true}
+		//tlsConf = &tls.Config{InsecureSkipVerify: true}
 	}
 
 	tr := &http.Transport{
