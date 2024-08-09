@@ -44,7 +44,11 @@ func NewClient(opts ...*Option) (c *Client) {
 		header = opt.Header
 		tlsConf = opt.TlsConf
 	} else {
-		tlsConf = &tls.Config{}
+		opt = &Option{
+			Timeout: 30,
+			Header:  nil,
+			TlsConf: &tls.Config{},
+		}
 	}
 	var transport http.RoundTripper
 	if tlsConf != nil {

@@ -7,7 +7,6 @@ import (
 	"github.com/civet148/log"
 	"github.com/gin-gonic/gin"
 	"github.com/urfave/cli/v2"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,12 +14,12 @@ import (
 )
 
 const (
-	Version     = "v1.0.0"
+	Version     = "v1.0.1"
 	ProgramName = "httpc"
 )
 
 var (
-	BuildTime = "2022-12-15"
+	BuildTime = "2024-08-09"
 	GitCommit = ""
 )
 
@@ -202,29 +201,12 @@ var getCmd = &cli.Command{
 	Flags:     []cli.Flag{},
 	Action: func(cctx *cli.Context) error {
 		strUrl := cctx.Args().First()
-		//resp, err := http.Get(strUrl)
-		//if err != nil {
-		//	return log.Errorf("send request error [%s]", err)
-		//}
-
-		req, err := http.NewRequest("GET", strUrl, nil)
+		c := httpc.NewClient()
+		resp, err := c.Get(strUrl, nil)
 		if err != nil {
-			return log.Errorf("new request error [%s]", err)
-		}
-		var cli = http.Client{}
-		var resp *http.Response
-		if resp, err = cli.Do(req); err != nil {
-
 			return log.Errorf("send request error [%s]", err)
 		}
-
-		defer resp.Body.Close()
-		// 读取并输出响应内容
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return log.Errorf("read body error: %s", err)
-		}
-		log.Infof("response [%s]", body)
+		log.Infof("response [%s]", resp.Body)
 		return nil
 	},
 }
