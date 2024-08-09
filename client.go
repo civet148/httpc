@@ -33,13 +33,7 @@ func init() {
 	log.SetLevel(log.LEVEL_INFO)
 }
 
-// new a normal http client with timeout (seconds)
-func NewHttpClient(opts ...*Option) *Client {
-
-	return newClient(opts...)
-}
-
-func newClient(opts ...*Option) (c *Client) {
+func NewClient(opts ...*Option) (c *Client) {
 	var header http.Header
 	var tlsConf *tls.Config
 	var opt *Option
@@ -49,6 +43,8 @@ func newClient(opts ...*Option) (c *Client) {
 	if opt != nil {
 		header = opt.Header
 		tlsConf = opt.TlsConf
+	} else {
+		tlsConf = &tls.Config{}
 	}
 	var transport http.RoundTripper
 	if tlsConf != nil {
@@ -403,3 +399,4 @@ func (c *Client) getReader(params map[string]string) (reader io.Reader, contentT
 
 	return body, writer.FormDataContentType(), nil
 }
+

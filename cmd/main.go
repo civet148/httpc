@@ -136,7 +136,7 @@ var uploadCmd = &cli.Command{
 		},
 	},
 	Action: func(cctx *cli.Context) error {
-		c := httpc.NewHttpClient()
+		c := httpc.NewClient()
 		form := cctx.String(CMD_FLAG_NAME_FORM)
 		if form == "" {
 			return log.Errorf("form-data key & value requires")
@@ -178,7 +178,7 @@ var downloadCmd = &cli.Command{
 		},
 	},
 	Action: func(cctx *cli.Context) error {
-		c := httpc.NewHttpClient()
+		c := httpc.NewClient()
 		strOutput := cctx.String(CMD_FLAG_NAME_OUTPUT)
 		if strOutput == "" {
 			return log.Errorf("output file path requires")
@@ -288,3 +288,4 @@ func (m *Manager) startWebService() (err error) {
 	}
 	return
 }
+
