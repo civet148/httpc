@@ -71,7 +71,7 @@ func (c *Client) Close() {
 }
 
 func (c *Client) Debug() {
-	log.SetLevel(0)
+	log.SetLevel("debug")
 }
 
 func (c *Client) Header() http.Header {
@@ -245,9 +245,9 @@ example:
 	      "image_file":"@/tmp/a.jpg"
 	}
 */
-func (c *Client) PostFormDataMultipart(strUrl string, params map[string]string, queries ...url.Values) (r *Response, err error) {
+func (c *Client) PostFormDataMultipart(strUrl string, params url.Values, queries ...url.Values) (r *Response, err error) {
 	c.setContentType(CONTENT_TYPE_NAME_MULTIPART_FORM_DATA)
-	return c.doUpload(strUrl, params, queries...)
+	return c.doPostFormDataMultipart(strUrl, params, queries...)
 }
 
 // send a http request by POST method with content-type multipart/form-data
@@ -369,10 +369,10 @@ func (c *Client) SendRequest(header http.Header, strMethod, strUrl string, body 
 	return
 }
 
-func (c *Client) doUpload(strUrl string, params map[string]string, queries ...url.Values) (r *Response, err error) {
+func (c *Client) doPostFormDataMultipart(strUrl string, params url.Values, queries ...url.Values) (r *Response, err error) {
 	var body io.Reader
 	var contentType string
-	body, contentType, err = c.getReader(params)
+	body, contentType, err = c.getMultipartReader(params)
 	if err != nil {
 		return nil, log.Errorf(err.Error())
 	}
@@ -380,12 +380,16 @@ func (c *Client) doUpload(strUrl string, params map[string]string, queries ...ur
 	return c.SendRequest(c.header, HTTP_METHOD_POST, strUrl, body, queries...)
 }
 
-func (c *Client) getReader(params map[string]string) (reader io.Reader, contentType string, err error) {
+func (c *Client) getMultipartReader(params url.Values) (reader io.Reader, contentType string, err error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	defer writer.Close()
-	for k, v := range params {
-
+	for k, vs := range params {
+		if len(vs) == 0 {
+			log.Debugf("from key [%s] value is empty", k)
+			continue
+		}
+		v := vs[0]
 		if strings.HasPrefix(v, "@") {
 			path := v[1:]
 			upfile := &uploadFile{
