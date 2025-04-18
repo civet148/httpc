@@ -331,7 +331,9 @@ func (c *Client) makeQueryUrl(strUrl string, queries ...url.Values) string {
 		params = append(params, query.Encode())
 	}
 	query := strings.Join(params, "&")
-	return fmt.Sprintf("%s?%s", strUrl, query)
+	strUrl = fmt.Sprintf("%s?%s", strUrl, query)
+	log.Debugf("query url [%s]", strUrl)
+	return strUrl
 }
 
 func (c *Client) SendRequest(header http.Header, strMethod, strUrl string, body io.Reader, queries ...url.Values) (r *Response, err error) {
