@@ -331,7 +331,6 @@ func (c *Client) makeQueryUrl(strUrl string, queries ...url.Values) string {
 		params = append(params, query.Encode())
 	}
 	query := strings.Join(params, "&")
-	log.Infof("query params %v", query)
 	return fmt.Sprintf("%s?%s", strUrl, query)
 }
 
