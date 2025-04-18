@@ -30,16 +30,18 @@ func FilfoxGet(c *httpc.Client) {
 		log.Errorf("GET error [%s]", err)
 		return
 	}
-	//for i := 0; i < 1; i++ {
-	//	r, err = c.Get("https://filfox.info/api/v1/address/f07749/blocks?page=1&pageSize=5", nil)
-	//	if err != nil {
-	//		log.Errorf("GET error [%s]", err)
-	//		return
-	//	}
-	//	log.Debugf("[%d] response code [%v] content type [%s] data [%+v]", i, r.StatusCode, r.ContentType, string(r.Body))
-	//	time.Sleep(2 * time.Second)
+	//
+	//var body = make(url.Values)
+	//body.Add("block_id", "9566631935999642852")
+	//var query = make(url.Values)
+	//query.Add("sign_type", "R S A2")
+	//query.Add("version", "1.0")
+	//r, err = c.PostFormUrlEncoded("https://filfox.info/api/v1/address/f07749/blocks", body, query)
+	//if err != nil {
+	//	log.Errorf("POST error [%s]", err)
+	//	return
 	//}
-
+	//log.Debugf("POST response [%s]", r.Body)
 }
 
 func FastJson() {

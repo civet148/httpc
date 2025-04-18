@@ -121,8 +121,11 @@ func (c *Client) Get(strUrl string, values url.Values) (r *Response, err error) 
 }
 
 // send a http request by GET method and copy to writter
-func (c *Client) CopyFile(strUrl string, writer io.Writer) (written int64, err error) {
+func (c *Client) CopyFile(strUrl string, writer io.Writer, queries ...url.Values) (written int64, err error) {
 	var r *http.Response
+	for _, query := range queries { //URL路径查询参数
+		strUrl = fmt.Sprintf("%s?%s", strUrl, query.Encode())
+	}
 	r, err = http.Get(strUrl)
 	if err != nil {
 		return 0, err
@@ -136,8 +139,11 @@ func (c *Client) CopyFile(strUrl string, writer io.Writer) (written int64, err e
 }
 
 // send a http request by GET method and save to file
-func (c *Client) SaveFile(strUrl string, strFilePath string) (written int64, err error) {
+func (c *Client) SaveFile(strUrl string, strFilePath string, queries ...url.Values) (written int64, err error) {
 	var r *http.Response
+	for _, query := range queries { //URL路径查询参数
+		strUrl = fmt.Sprintf("%s?%s", strUrl, query.Encode())
+	}
 	r, err = http.Get(strUrl)
 	if err != nil {
 		return 0, err
@@ -157,8 +163,8 @@ func (c *Client) SaveFile(strUrl string, strFilePath string) (written int64, err
 }
 
 // send a http request by POST method with application/x-www-form-urlencoded
-func (c *Client) PostUrlEncoded(strUrl string, values url.Values) (r *Response, err error) {
-	return c.do(HTTP_METHOD_POST, strUrl, values)
+func (c *Client) PostUrlEncoded(strUrl string, values url.Values, queries ...url.Values) (r *Response, err error) {
+	return c.do(HTTP_METHOD_POST, strUrl, values, queries...)
 }
 
 // send a http request by GET method and unmarshal json data to struct v
@@ -182,51 +188,51 @@ func (c *Client) GetJson(strUrl string, values url.Values, v interface{}) (statu
 }
 
 // send a http request by PUT method
-func (c *Client) Put(strUrl string, body io.Reader) (r *Response, err error) {
-	return c.SendRequest(c.header, HTTP_METHOD_PUT, strUrl, body)
+func (c *Client) Put(strUrl string, body io.Reader, queries ...url.Values) (r *Response, err error) {
+	return c.SendRequest(c.header, HTTP_METHOD_PUT, strUrl, body, queries...)
 }
 
 // send a http request by DELETE method
-func (c *Client) Delete(strUrl string) (r *Response, err error) {
-	return c.do(HTTP_METHOD_DELETE, strUrl, nil)
+func (c *Client) Delete(strUrl string, queries ...url.Values) (r *Response, err error) {
+	return c.do(HTTP_METHOD_DELETE, strUrl, nil, queries...)
 }
 
 // send a http request by TRACE method
-func (c *Client) Trace(strUrl string) (r *Response, err error) {
-	return c.do(HTTP_METHOD_TRACE, strUrl, nil)
+func (c *Client) Trace(strUrl string, queries ...url.Values) (r *Response, err error) {
+	return c.do(HTTP_METHOD_TRACE, strUrl, nil, queries...)
 }
 
 // send a http request by PATCH method
-func (c *Client) Patch(strUrl string) (r *Response, err error) {
-	return c.do(HTTP_METHOD_PATCH, strUrl, nil)
+func (c *Client) Patch(strUrl string, queries ...url.Values) (r *Response, err error) {
+	return c.do(HTTP_METHOD_PATCH, strUrl, nil, queries...)
 }
 
 // send a http request by POST method with content-type specified
 // data type could be string,[]byte,url.Values,struct and so on
-func (c *Client) Post(strContentType string, strUrl string, data interface{}) (r *Response, err error) {
+func (c *Client) Post(strContentType string, strUrl string, data interface{}, queries ...url.Values) (r *Response, err error) {
 	c.setContentType(strContentType)
-	return c.do(HTTP_METHOD_POST, strUrl, data)
+	return c.do(HTTP_METHOD_POST, strUrl, data, queries...)
 }
 
 // send a http request by POST method with content-type application/json
 // data type could be string,[]byte,url.Values,struct and so on and
-func (c *Client) PostJson(strUrl string, data interface{}) (r *Response, err error) {
+func (c *Client) PostJson(strUrl string, data interface{}, queries ...url.Values) (r *Response, err error) {
 	c.setContentType(CONTENT_TYPE_NAME_APPLICATION_JSON)
-	return c.do(HTTP_METHOD_POST, strUrl, data)
+	return c.do(HTTP_METHOD_POST, strUrl, data, queries...)
 }
 
 // send a http request by POST method with content-type text/plain
 // data type must could be string,[]byte,url.Values,struct and so on
-func (c *Client) PostRaw(strUrl string, data interface{}) (r *Response, err error) {
+func (c *Client) PostRaw(strUrl string, data interface{}, queries ...url.Values) (r *Response, err error) {
 	c.setContentType(CONTENT_TYPE_NAME_TEXT_PLAIN)
-	return c.do(HTTP_METHOD_POST, strUrl, data)
+	return c.do(HTTP_METHOD_POST, strUrl, data, queries...)
 }
 
 // send a http request by POST method with content-type multipart/form-data
 // data type must could be string,[]byte,url.Values,struct and so on
-func (c *Client) PostFormData(strUrl string, data interface{}) (r *Response, err error) {
+func (c *Client) PostFormData(strUrl string, data interface{}, queries ...url.Values) (r *Response, err error) {
 	c.setContentType(CONTENT_TYPE_NAME_MULTIPART_FORM_DATA)
-	return c.do(HTTP_METHOD_POST, strUrl, data)
+	return c.do(HTTP_METHOD_POST, strUrl, data, queries...)
 }
 
 /*
@@ -239,16 +245,16 @@ example:
 	      "image_file":"@/tmp/a.jpg"
 	}
 */
-func (c *Client) PostFormDataMultipart(strUrl string, params map[string]string) (r *Response, err error) {
+func (c *Client) PostFormDataMultipart(strUrl string, params map[string]string, queries ...url.Values) (r *Response, err error) {
 	c.setContentType(CONTENT_TYPE_NAME_MULTIPART_FORM_DATA)
-	return c.doUpload(strUrl, params)
+	return c.doUpload(strUrl, params, queries...)
 }
 
 // send a http request by POST method with content-type multipart/form-data
 // data type must could be string,[]byte,url.Values,struct and so on
-func (c *Client) PostFormUrlEncoded(strUrl string, data interface{}) (r *Response, err error) {
+func (c *Client) PostFormUrlEncoded(strUrl string, data interface{}, queries ...url.Values) (r *Response, err error) {
 	c.setContentType(CONTENT_TYPE_NAME_X_WWW_FORM_URL_ENCODED)
-	return c.do(HTTP_METHOD_POST, strUrl, data)
+	return c.do(HTTP_METHOD_POST, strUrl, data, queries...)
 }
 
 func (c *Client) setHeader(key, value string) {
@@ -265,13 +271,13 @@ func (c *Client) setContentType(contentType string) {
 }
 
 // do send request to destination host
-func (c *Client) do(strMethod, strUrl string, data interface{}) (r *Response, err error) {
+func (c *Client) do(strMethod, strUrl string, data interface{}, queries ...url.Values) (r *Response, err error) {
 
 	var body io.Reader
 
 	if data != nil {
 
-		switch data.(type) {
+		switch data.(type) { //请求体body
 		case url.Values:
 			{
 				values := data.(url.Values)
@@ -297,7 +303,7 @@ func (c *Client) do(strMethod, strUrl string, data interface{}) (r *Response, er
 		}
 	}
 
-	if r, err = c.SendRequest(c.header, strMethod, strUrl, body); err != nil {
+	if r, err = c.SendRequest(c.header, strMethod, strUrl, body, queries...); err != nil {
 		return
 	}
 	return
@@ -316,11 +322,24 @@ func (c *Client) get(strUrl string, values url.Values) (r *Response, err error) 
 	return c.SendRequest(c.header, HTTP_METHOD_GET, strUrl, nil)
 }
 
-func (c *Client) SendRequest(header http.Header, strMethod, strUrl string, body io.Reader) (r *Response, err error) {
+func (c *Client) makeQueryUrl(strUrl string, queries ...url.Values) string {
+	if len(queries) == 0 {
+		return strUrl
+	}
+	var params []string
+	for _, query := range queries { //URL路径查询参数
+		params = append(params, query.Encode())
+	}
+	query := strings.Join(params, "&")
+	log.Infof("query params %v", query)
+	return fmt.Sprintf("%s?%s", strUrl, query)
+}
+
+func (c *Client) SendRequest(header http.Header, strMethod, strUrl string, body io.Reader, queries ...url.Values) (r *Response, err error) {
 
 	var req *http.Request
 	var resp *http.Response
-
+	strUrl = c.makeQueryUrl(strUrl, queries...)
 	if req, err = http.NewRequest(strMethod, strUrl, body); err != nil {
 		log.Errorf("new request error [%s]", err)
 		return
@@ -349,7 +368,7 @@ func (c *Client) SendRequest(header http.Header, strMethod, strUrl string, body 
 	return
 }
 
-func (c *Client) doUpload(strUrl string, params map[string]string) (r *Response, err error) {
+func (c *Client) doUpload(strUrl string, params map[string]string, queries ...url.Values) (r *Response, err error) {
 	var body io.Reader
 	var contentType string
 	body, contentType, err = c.getReader(params)
@@ -357,7 +376,7 @@ func (c *Client) doUpload(strUrl string, params map[string]string) (r *Response,
 		return nil, log.Errorf(err.Error())
 	}
 	c.setHeader(HEADER_KEY_CONTENT_TYPE, contentType)
-	return c.SendRequest(c.header, HTTP_METHOD_POST, strUrl, body)
+	return c.SendRequest(c.header, HTTP_METHOD_POST, strUrl, body, queries...)
 }
 
 func (c *Client) getReader(params map[string]string) (reader io.Reader, contentType string, err error) {
@@ -403,4 +422,3 @@ func (c *Client) getReader(params map[string]string) (reader io.Reader, contentT
 
 	return body, writer.FormDataContentType(), nil
 }
-
