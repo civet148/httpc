@@ -70,35 +70,46 @@ func (c *Client) Close() {
 	c.cli.CloseIdleConnections()
 }
 
-func (c *Client) Debug() {
+func (c *Client) Debug() *Client {
 	log.SetLevel("debug")
+	return c
 }
 
-func (c *Client) Header() http.Header {
+func (c *Client) GetHeader() http.Header {
 	if c.header == nil {
 		c.header = http.Header{}
 	}
 	return c.header
 }
 
-func (c *Client) SetHeader(key, value string) {
+func (c *Client) SetHeader(key, value string) *Client {
 	c.setHeader(key, value)
+	return c
 }
 
-func (c *Client) SetToken(token string) {
+func (c *Client) WithContentTypeJSON() *Client {
+	c.setContentType(CONTENT_TYPE_NAME_APPLICATION_JSON)
+	return c
+}
+
+func (c *Client) WithToken(token string) *Client {
 	c.setHeader(HEADER_KEY_TOKEN, token)
+	return c
 }
 
-func (c *Client) SetBasicAuth(username, password string) {
+func (c *Client) WithBasicAuth(username, password string) *Client {
 	c.setHeader(HEADER_KEY_AUTHORIZATION, "Basic "+basicAuth(username, password))
+	return c
 }
 
-func (c *Client) SetOAuth2(token string) {
-	c.SetBearerToken(token)
+func (c *Client) WithOAuth2(token string) *Client {
+	c.WithBearerToken(token)
+	return c
 }
 
-func (c *Client) SetBearerToken(token string) {
+func (c *Client) WithBearerToken(token string) *Client {
 	c.setHeader(HEADER_KEY_AUTHORIZATION, "Bearer "+token)
+	return c
 }
 
 func (c *Client) GetEx(strUrl string, values url.Values, v interface{}) (status int, err error) {
@@ -223,7 +234,7 @@ func (c *Client) PostJson(strUrl string, data interface{}, queries ...url.Values
 
 // send a http request by POST method with content-type text/plain
 // data type must could be string,[]byte,url.Values,struct and so on
-func (c *Client) PostRaw(strUrl string, data interface{}, queries ...url.Values) (r *Response, err error) {
+func (c *Client) PostTextPlain(strUrl string, data interface{}, queries ...url.Values) (r *Response, err error) {
 	c.setContentType(CONTENT_TYPE_NAME_TEXT_PLAIN)
 	return c.do(HTTP_METHOD_POST, strUrl, data, queries...)
 }

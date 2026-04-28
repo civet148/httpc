@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/urfave/cli/v2"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"strings"
@@ -141,7 +142,7 @@ var uploadCmd = &cli.Command{
 			return log.Errorf("form-data key & value requires")
 		}
 		formKVS := strings.Split(cctx.String(CMD_FLAG_NAME_FORM), ",")
-		var params = make(map[string]string)
+		var params = make(url.Values)
 		for _, kv := range formKVS {
 			kvs := strings.Split(kv, "=")
 			if len(kvs) != 2 {
@@ -149,7 +150,7 @@ var uploadCmd = &cli.Command{
 			}
 			key := strings.TrimSpace(kvs[0])
 			val := strings.TrimSpace(kvs[1])
-			params[key] = val
+			params[key] = []string{val}
 		}
 		resp, err := c.PostFormDataMultipart(cctx.String(CMD_FLAG_NAME_URL), params)
 		if err != nil {
@@ -270,4 +271,3 @@ func (m *Manager) startWebService() (err error) {
 	}
 	return
 }
-
